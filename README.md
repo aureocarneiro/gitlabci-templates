@@ -18,7 +18,7 @@ clean:
     rm -rf build/
     rm -rf *.egg-info/
 
-build: clean
+build:
     fpm -s python -t rpm --python-bin python2.7 --no-python-fix-name --no-python-downcase-dependencies  --no-python-fix-dependencies --python-package-name-prefix python --rpm-dist el7 .
 
 test: build
