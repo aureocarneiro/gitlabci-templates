@@ -22,6 +22,7 @@ build:
   image: docker.maxiv.lu.se/centos7-build:latest
   type:  Build
   script:
+    - rm ./*.*.rpm -f
     - make build
   artifacts:
     paths:
