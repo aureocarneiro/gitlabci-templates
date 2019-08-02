@@ -1,0 +1,80 @@
+variables:
+  DIST: el7
+  ARCH: x86_64
+
+
+stages:
+  - Trigger
+  - Build
+  - PublishRPM
+
+
+trigger_pipeline:
+  type: Trigger
+  script:
+    - echo "Triggered"
+  when: manual
+  tags: [cinode]
+  allow_failure: false
+
+
+build:
+  image: docker.maxiv.lu.se/centos7-build:latest
+  type:  Build
+  script:
+    - make clean
+    - make build
+  artifacts:
+    paths:
+      - ./*.rpm
+    expire_in: 1 week
+  tags: [docker]
+  dependencies:
+    - trigger_pipeline
+
+
+publish_in_testing_repo:
+  type: PublishRPM
+  script:
+    - |
+      FILES=*.rpm
+      for f in $FILES
+      do
+        echo "Looking for $f"
+        if scp jenkins@srv-repo-0:/repo/testing/${DIST}/${ARCH}/$f ./ >&/dev/null ; then
+          echo "Error, same version already published.">&2
+          exit 1 
+        else 
+          echo "Copying $f"
+          scp -v $f jenkins@srv-repo-0:/repo/testing/${DIST}/${ARCH}
+        fi
+      done
+      ssh jenkins@srv-repo-0 createrepo --update /repo/testing/${DIST}/${ARCH}
+  tags: [cinode-0]
+  dependencies:
+    - build
+  only:
+    - develop
+
+publish_in_public_repo:
+  type: PublishRPM
+  script:
+    - |
+      FILES=*.rpm
+      for f in $FILES
+      do
+        echo "Looking for $f"
+        if scp jenkins@srv-repo-0:/repo/public/${DIST}/${ARCH}/$f ./ >&/dev/null ; then
+          echo "Error, same version already published.">&2
+          exit 1 
+        else 
+          echo "Copying $f"
+          scp -v $f jenkins@srv-repo-0:/repo/public/${DIST}/${ARCH}
+        fi
+      done
+      ssh jenkins@srv-repo-0 createrepo --update /repo/public/${DIST}/${ARCH}
+  tags: [cinode-0]
+  dependencies:
+    - build
+  only:
+    - master
