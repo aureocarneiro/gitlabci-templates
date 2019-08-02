@@ -1,0 +1,55 @@
+variables:
+  DIST: el7
+  ARCH: x86_64
+
+stages:
+  - Trigger
+  - Build
+  - PublishRPM
+
+
+trigger_pipeline:
+  type: Trigger
+  script:
+    - echo "Triggered"
+  when: manual
+  tags: [cinode]
+  allow_failure: false
+
+
+build:
+  image: docker.maxiv.lu.se/centos7-build:latest
+  type:  Build
+  script:
+    - make build
+  artifacts:
+    paths:
+      - ./*.rpm
+    expire_in: 1 week
+  tags: [docker]
+  dependencies:
+    - trigger_pipeline
+
+
+testing:
+  type: PublishRPM
+  script:
+    - scp -v *.rpm jenkins@srv-repo-0:/repo/testing/${DIST}/${ARCH}
+    - ssh jenkins@srv-repo-0 createrepo --update /repo/testing/${DIST}/${ARCH}
+  tags: [cinode-0]
+  dependencies:
+    - build
+  only:
+    - develop
+
+public:
+  type: PublishRPM
+  script:
+    - scp -v *.rpm jenkins@srv-repo-0:/repo/public/el7/x86_64/
+    - ssh jenkins@srv-repo-0 createrepo --update /repo/public/el7/x86_64
+  tags: [cinode-0]
+  dependencies:
+    - build
+  only:
+    - master
+    
