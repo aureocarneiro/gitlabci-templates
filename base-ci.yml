@@ -10,7 +10,7 @@ stages:
 
 
 trigger_pipeline:
-  type: Trigger
+  stage: Trigger
   script:
     - echo "Triggered"
   when: manual
@@ -20,7 +20,7 @@ trigger_pipeline:
 
 build:
   image: docker.maxiv.lu.se/centos7-build:latest
-  type:  Build
+  stage:  Build
   script:
     - make clean
     - make build
@@ -34,7 +34,7 @@ build:
 
 
 publish_in_testing_repo:
-  type: PublishRPM
+  stage: PublishRPM
   script:
     - |
       FILES=*.rpm
@@ -57,7 +57,7 @@ publish_in_testing_repo:
     - develop
 
 publish_in_public_repo:
-  type: PublishRPM
+  stage: PublishRPM
   script:
     - |
       FILES=*.rpm
