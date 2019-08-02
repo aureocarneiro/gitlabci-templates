@@ -2,6 +2,7 @@ variables:
   DIST: el7
   ARCH: x86_64
 
+
 stages:
   - Trigger
   - Build
@@ -52,4 +53,3 @@ publish_in_public_repo:
     - build
   only:
     - master
-    
