@@ -38,7 +38,7 @@ publish_in_testing_repo:
   script:
     - scp -v *.rpm jenkins@srv-repo-0:/repo/testing/${DIST}/${ARCH}
     - ssh jenkins@srv-repo-0 createrepo --update /repo/testing/${DIST}/${ARCH}
-  tags: [cinode-1]
+  tags: [cinode-0]
   dependencies:
     - build
   only:
@@ -49,7 +49,7 @@ publish_in_public_repo:
   script:
     - scp -v *.rpm jenkins@srv-repo-0:/repo/public/${DIST}/${ARCH}
     - ssh jenkins@srv-repo-0 createrepo --update /repo/public/${DIST}/${ARCH}
-  tags: [cinode-1]
+  tags: [cinode-0]
   dependencies:
     - build
   only:
