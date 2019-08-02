@@ -36,8 +36,20 @@ build:
 publish_in_testing_repo:
   type: PublishRPM
   script:
-    - scp -v *.rpm jenkins@srv-repo-0:/repo/testing/${DIST}/${ARCH}
-    - ssh jenkins@srv-repo-0 createrepo --update /repo/testing/${DIST}/${ARCH}
+    - |
+      FILES=*.rpm
+      for f in $FILES
+      do
+        echo "Looking for $f"
+        if scp jenkins@srv-repo-0:/repo/testing/${DIST}/${ARCH}/$f ./ >&/dev/null ; then
+          echo "Error, same version already published.">&2
+          exit 1 
+        else 
+          echo "Copying $f"
+          scp -v $f jenkins@srv-repo-0:/repo/testing/${DIST}/${ARCH}
+        fi
+      done
+      ssh jenkins@srv-repo-0 createrepo --update /repo/testing/${DIST}/${ARCH}
   tags: [cinode-0]
   dependencies:
     - build
@@ -47,8 +59,20 @@ publish_in_testing_repo:
 publish_in_public_repo:
   type: PublishRPM
   script:
-    - scp -v *.rpm jenkins@srv-repo-0:/repo/public/${DIST}/${ARCH}
-    - ssh jenkins@srv-repo-0 createrepo --update /repo/public/${DIST}/${ARCH}
+    - |
+      FILES=*.rpm
+      for f in $FILES
+      do
+        echo "Looking for $f"
+        if scp jenkins@srv-repo-0:/repo/public/${DIST}/${ARCH}/$f ./ >&/dev/null ; then
+          echo "Error, same version already published.">&2
+          exit 1 
+        else 
+          echo "Copying $f"
+          scp -v $f jenkins@srv-repo-0:/repo/public/${DIST}/${ARCH}
+        fi
+      done
+      ssh jenkins@srv-repo-0 createrepo --update /repo/public/${DIST}/${ARCH}
   tags: [cinode-0]
   dependencies:
     - build
