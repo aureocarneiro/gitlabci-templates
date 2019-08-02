@@ -8,7 +8,24 @@ YML templates for GitLab CI / CD
 
 Used as a base reference for all (at least most) of our gitlab projects.
 
-In order to use this template you need to create a Makefile inside your project 
+In order to use this template you need to create a `.gitlab-ci.yml` inside your project 
+repository. As and example you can use the following code:
+
+```yml
+include:
+  - project: 'kits-maxiv/cfg-maxiv-gitlabci'
+    ref: master
+    file: '/base-ci.yml'
+
+stages:
+  - Trigger
+  - Build
+  - PublishRPM
+```
+
+
+
+In order to use this template you need to create a `Makefile` inside your project 
 repository. As and example you can use the following code:
 
 ```make
@@ -78,6 +95,8 @@ if __name__ == "__main__":
 
 By default FPM will automatically add `python` as a prefix to your requires list, install-requires list and package name.
 You can manage that using tags in your FPM command.
+
+
 
 
 ## Authors
