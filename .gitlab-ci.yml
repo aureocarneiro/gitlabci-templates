@@ -31,7 +31,7 @@ build:
     - trigger_pipeline
 
 
-testing:
+publish_in_testing_repo:
   type: PublishRPM
   script:
     - scp -v *.rpm jenkins@srv-repo-0:/repo/testing/${DIST}/${ARCH}
@@ -42,11 +42,11 @@ testing:
   only:
     - develop
 
-public:
+publish_in_public_repo:
   type: PublishRPM
   script:
-    - scp -v *.rpm jenkins@srv-repo-0:/repo/public/el7/x86_64/
-    - ssh jenkins@srv-repo-0 createrepo --update /repo/public/el7/x86_64
+    - scp -v *.rpm jenkins@srv-repo-0:/repo/public/${DIST}/${ARCH}
+    - ssh jenkins@srv-repo-0 createrepo --update /repo/public/${DIST}/${ARCH}
   tags: [cinode-0]
   dependencies:
     - build
