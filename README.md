@@ -6,17 +6,12 @@ YML templates for GitLab CI / CD
 
 ## Usage
 
-Used as a base reference for all (atleast most) of our gitlab projects.
+Used as a base reference for all (at least most) of our gitlab projects.
 
-## Authors
+In order to use this template you need to create a Makefile inside your project 
+repository. As and example you can use the following code:
 
-KIST SW group
-
-kitscontrols@maxiv.lu.se
-
-## Makefile for base-ci.yml
-
-```
+```make
 # Example of Makefile to build python fpm project
 clean:
     rm ./*.*.rpm -f
@@ -30,4 +25,9 @@ test: build
     sudo yum install -y *.el7.noarch.rpm
 ```
 
+## Authors
+
+KIST SW group
+
+kitscontrols@maxiv.lu.se
 
