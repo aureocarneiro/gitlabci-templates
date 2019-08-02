@@ -25,6 +25,61 @@ test: build
 	sudo yum install -y *.el7.noarch.rpm
 ```
 
+FPM does not use the setup.cfg, configuration file, to get the build requires and package dependencies. 
+To define the dependencies (build and installation) you should update your setup.py like this:
+
+```python
+from setuptools import setup, find_packages
+
+
+def main():
+    """Main method collecting all the parameters to setup."""
+    name = "tangods-example"
+
+    version = "1.0.0"
+
+    description = "Setup.py example file."
+
+    author = "KITS - Controls"
+
+    author_email = "KITS@maxiv.lu.se"
+
+    license = "GPLv3"
+
+    url = "http://www.maxiv.lu.se"
+
+    packages = find_packages()
+
+    provides = ["example"]
+
+    requires = ['example_pkg1', 'example_pkg2']
+    
+    install_requires = ['example_pkg1', 'example_pkg3']
+
+    entry_points={'console_scripts': ['Example = example:main']}
+    
+    setup(
+        name=name,
+        version=version,
+        description=description,
+        author=author,
+        author_email=author_email,
+        license=license,
+        url=url,
+        packages=packages,
+        requires=requires,
+        install_requires=install_requires,
+        entry_points=entry_points,
+    )
+
+if __name__ == "__main__":
+    main()
+```
+
+By default FPM will automatically add `python` as a prefix to your requires list, install-requires list and package name.
+You can manage that using tags in your FPM command.
+
+
 ## Authors
 
 KIST SW group
