@@ -1,0 +1,170 @@
+include:
+  - local: '/.cpp-template.yml'
+#   ____ _____  _    ____ _____ ____  
+#  / ___|_   _|/ \  / ___| ____/ ___| 
+#  \___ \ | | / _ \| |  _|  _| \___ \ 
+#   ___) || |/ ___ \ |_| | |___ ___) |
+#  |____/ |_/_/   \_\____|_____|____/ 
+#                                      
+#
+stages:
+  - trigger
+  - build
+#  - test
+  - publish
+  - trigger_publish
+
+#                                                                  
+# _/_/_/_/_/            _/                                          
+#    _/      _/  _/_/        _/_/_/    _/_/_/    _/_/    _/  _/_/   
+#   _/      _/_/      _/  _/    _/  _/    _/  _/_/_/_/  _/_/        
+#  _/      _/        _/  _/    _/  _/    _/  _/        _/           
+# _/      _/        _/    _/_/_/    _/_/_/    _/_/_/  _/            
+#                            _/        _/                           
+#                       _/_/      _/_/                              
+#
+manual_trigger:
+  stage: trigger
+  script:
+    - echo "Triggered"
+  when: manual
+  tags: [cinode]
+  allow_failure: false
+
+#
+#     _/_/_/              _/  _/        _/   
+#    _/    _/  _/    _/      _/    _/_/_/    
+#   _/_/_/    _/    _/  _/  _/  _/    _/     
+#  _/    _/  _/    _/  _/  _/  _/    _/      
+# _/_/_/      _/_/_/  _/  _/    _/_/_/       
+#
+build el7 x86_64: 
+  extends: .build-template
+  tags: [ el7, x86_64]
+  variables:
+    DIST: el7
+    ARCH: x86_64
+
+build el7 i386:
+  extends: .build-template
+  tags: [ el7, i386]
+  variables:
+    UNSUPPORTED: 'True'
+    DIST: el7
+    ARCH: i386
+
+build el6 x86_64:
+  extends: .build-template
+  tags: [ el6, x86_64]
+  variables:
+    DIST: el6
+    ARCH: x86_64
+
+build el6 i386:
+  extends: .build-template
+  tags: [ el6, i386]
+  variables:
+    DIST: el6
+    ARCH: i386
+
+#                                         
+# _/_/_/_/_/                      _/      
+#    _/      _/_/      _/_/_/  _/_/_/_/   
+#   _/    _/_/_/_/  _/_/        _/        
+#  _/    _/            _/_/    _/         
+# _/      _/_/_/  _/_/_/        _/_/      
+#                                         
+#echo-test:
+#  stage: test
+#  script: echo "Maybe One Day..."
+
+
+#                                                              
+#     _/_/_/              _/        _/  _/            _/       
+#    _/    _/  _/    _/  _/_/_/    _/        _/_/_/  _/_/_/    
+#   _/_/_/    _/    _/  _/    _/  _/  _/  _/_/      _/    _/   
+#  _/        _/    _/  _/    _/  _/  _/      _/_/  _/    _/    
+# _/          _/_/_/  _/_/_/    _/  _/  _/_/_/    _/    _/     
+#                                                              
+publish_binary_rpm:
+  extends: .publish_in_repo
+  variables:
+    ARTEFACT: "RPM"
+
+publish_source_rpm:
+  extends: .publish_in_repo
+  variables:
+    ARTEFACT: "SRPMS"
+
+#                                                              
+#     _/_/_/              _/        _/  _/            _/       
+#    _/    _/  _/    _/  _/_/_/    _/        _/_/_/  _/_/_/    
+#   _/_/_/    _/    _/  _/    _/  _/  _/  _/_/      _/    _/   
+#  _/        _/    _/  _/    _/  _/  _/      _/_/  _/    _/    
+# _/          _/_/_/  _/_/_/    _/  _/  _/_/_/    _/    _/     
+#                                                              
+#                                                              
+#                                                                   
+# _/_/_/_/_/            _/                                          
+#    _/      _/  _/_/        _/_/_/    _/_/_/    _/_/    _/  _/_/   
+#   _/      _/_/      _/  _/    _/  _/    _/  _/_/_/_/  _/_/        
+#  _/      _/        _/  _/    _/  _/    _/  _/        _/           
+# _/      _/        _/    _/_/_/    _/_/_/    _/_/_/  _/            
+#                            _/        _/                           
+#                       _/_/      _/_/                              
+# 
+# CENTOS 7 REPO
+publish testing el7 x86_64:
+  extends: .trigger_publish_rpm
+  variables:
+    RELEASE: testing
+    DIST: el7
+    ARCH: x86_64
+  only:
+    - develop
+
+publish public el7 x86_64:
+  extends: .trigger_publish_rpm
+  variables:
+    RELEASE: public
+    DIST: el7
+    ARCH: x86_64
+  only:
+    - master
+
+# CENTOS 6 REPO
+publish testing el6 x86_64:
+  extends: .trigger_publish_rpm
+  variables:
+    RELEASE: testing
+    DIST: el6
+    ARCH: x86_64
+  only:
+    - develop
+
+publish public el6 x86_64:
+  extends: .trigger_publish_rpm
+  variables:
+    RELEASE: public
+    DIST: el6
+    ARCH: x86_64
+  only:
+    - master
+
+publish testing el6 i386:
+  extends: .trigger_publish_rpm
+  variables:
+    RELEASE: testing
+    DIST: el6
+    ARCH: i386
+  only:
+    - develop
+
+publish public el6 i386:
+  extends: .trigger_publish_rpm
+  variables:
+    RELEASE: public
+    DIST: el6
+    ARCH: i386
+  only:
+    - master
