@@ -1,0 +1,144 @@
+# Default behaviour
+# default is a new keyword from gitlab 12
+# We are running 11.9 which does not recognise this keyword
+#default:
+#  script: echo "Define default Environment Variable"
+#  before_script: ...
+before_script:
+  - |
+    # Constant
+    export REMOTE_REPO=jenkins@srv-repo-0:/repo
+  - |
+    # RELEASE MODE set for all scripts
+    # testing is the default release, it does not mean that the package will be deploy
+    # in the testing repo. Only specific branches can publish artefact
+    export RELEASE="testing"
+    [[ "$CI_COMMIT_REF_NAME" = "master" ]] && RELEASE="public"
+    [[ "$CI_COMMIT_REF_NAME" = "develop" ]] && RELEASE="testing"
+  - |
+    # SAFE_MV HELPER FUNCTIONS
+    # -------------------------
+    # This safe move will find the files from the arguments and move to
+    # the target directory (make them if they don't exist)
+    #
+    # usage: safe_mv SOURCE_DIR SOURCE_FILES TARGET_DIR
+    #   SOURCE_DIR: the directory to scan the files to move i.e results/maxlab-el7-i386
+    #   SOURCES_FILES: glob files description i.e *.*86*.rpm
+    #   TARGET_DIR: destination of the files, does not keep the original structure
+    safe_mv(){
+
+      SOURCE_DIR=$1
+      SOURCE_FILES=$2
+      TARGET_DIR=$3
+
+      mkdir -p $TARGET_DIR
+      FILES=$(find $SOURCE_DIR -name $SOURCE_FILES )
+
+      if [ -n "$FILES" ]
+      then
+        echo "Moving: $FILES"
+        mv $FILES $TARGET_DIR/
+      else
+        echo "No files to move"
+      fi
+    }
+  - |
+    # SAFE_UPLOAD HELPER FUNCTIONS
+    # ----------------------------
+    # This safe upload will find the files from the arguments and upload to
+    # the remote directory (fail if they don't exist)
+    # ONLY and ONLY if the file does not exist already (No overwrite).
+    #
+    # This function is very useful to upload RPM to the repo, for example:
+    #
+    # $> safe_upload RPM "*.rpm" jenkins@srv-repo-0:/repo
+    #
+    # and the RPM directory looks like:
+    # $> find RPM -name "*.rpm"
+    # RPM/el7/x86_64/libitest2811-3.10.2-4.el7.maxlab.x86_64.rpm
+    # RPM/el7/x86_64/libitest2811-debuginfo-3.10.2-4.el7.maxlab.x86_64.rpm
+    # RPM/el7/x86_64/libitest2811-devel-3.10.2-4.el7.maxlab.x86_64.rpm
+    # RPM/testing/el6/x86_64/libitest2811-3.10.2-4.el6.maxlab.x86_64.rpm
+    # RPM/testing/el6/x86_64/libitest2811-debuginfo-3.10.2-4.el6.maxlab.x86_64.rpm
+    # RPM/testing/el6/x86_64/libitest2811-devel-3.10.2-4.el6.maxlab.x86_64.rpm
+    #
+    #
+    # usage: safe_upload SOURCE_DIR SOURCE_FILES TARGET_DIR
+    #   SOURCE_DIR: the directory to scan the files to upload i.e RPM
+    #               Note the first level will be remove from the final filename
+    #               It means that the other level should correspond to the remote directories structure
+    #   SOURCES_FILES: glob files description i.e *.rpm
+    #   TARGET_DIR: remote destination of the files (use scp for the transfer), does keep the original structure but not the first level
+    safe_upload(){
+      ARTEFACT=$1
+      ARTEFACT_FILES=$2
+      REMOTE_DIR=$3
+
+      echo "Uploading $ARTEFACT files"
+      FILES=$(find $ARTEFACT -name $ARTEFACT_FILES | cut -d/ -f2-)
+      for f in $FILES
+      do
+        echo "Looking for $f"
+        if scp $REMOTE_DIR/$f ./ >&/dev/null ; then
+          echo "Error, same version already published.">&2
+          exit 1
+       else
+          echo "Copying $f to $REMOTE_DIR"
+          scp $ARTEFACT/$f $REMOTE_DIR/$f
+        fi
+      done
+    }
+
+#
+# _/_/_/_/_/                      _/
+#    _/      _/_/      _/_/_/  _/_/_/_/
+#   _/    _/_/_/_/  _/_/        _/
+#  _/    _/            _/_/    _/
+# _/      _/_/_/  _/_/_/        _/_/
+#
+#echo-test:
+#  stage: test
+#  script: echo "Maybe One Day..."
+
+
+#
+#     _/_/_/              _/        _/  _/            _/
+#    _/    _/  _/    _/  _/_/_/    _/        _/_/_/  _/_/_/
+#   _/_/_/    _/    _/  _/    _/  _/  _/  _/_/      _/    _/
+#  _/        _/    _/  _/    _/  _/  _/      _/_/  _/    _/
+# _/          _/_/_/  _/_/_/    _/  _/  _/_/_/    _/    _/
+#
+.publish_in_repo:
+  stage: publish
+  script:
+    # Upload artefact to the REPO
+    - safe_upload $ARTEFACT "*.rpm" $REMOTE_REPO
+  tags: [publisher]
+  only:
+    - master
+    - develop
+
+#
+#     _/_/_/              _/        _/  _/            _/
+#    _/    _/  _/    _/  _/_/_/    _/        _/_/_/  _/_/_/
+#   _/_/_/    _/    _/  _/    _/  _/  _/  _/_/      _/    _/
+#  _/        _/    _/  _/    _/  _/  _/      _/_/  _/    _/
+# _/          _/_/_/  _/_/_/    _/  _/  _/_/_/    _/    _/
+#
+#
+#
+# _/_/_/_/_/            _/
+#    _/      _/  _/_/        _/_/_/    _/_/_/    _/_/    _/  _/_/
+#   _/      _/_/      _/  _/    _/  _/    _/  _/_/_/_/  _/_/
+#  _/      _/        _/  _/    _/  _/    _/  _/        _/
+# _/      _/        _/    _/_/_/    _/_/_/    _/_/_/  _/
+#                            _/        _/
+#                       _/_/      _/_/
+#
+.trigger_publish_rpm:
+  stage: trigger_publish
+  #CREATEREPO DON'T LIKE CONCURRENT CALL
+  #trigger: kits-maxiv/cfg-maxi-gitlab-publish
+  script:
+    - ssh jenkins@srv-repo-0 createrepo --update /repo/${RELEASE}/${DIST}/${ARCH}
+  tags: [publisher]
