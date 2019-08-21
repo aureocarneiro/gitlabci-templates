@@ -1,0 +1,190 @@
+include:
+  - local: '/.pythonds-template.yml'
+#   ____ _____  _    ____ _____ ____
+#  / ___|_   _|/ \  / ___| ____/ ___|
+#  \___ \ | | / _ \| |  _|  _| \___ \
+#   ___) || |/ ___ \ |_| | |___ ___) |
+#  |____/ |_/_/   \_\____|_____|____/
+#
+#
+stages:
+  - trigger
+  - build
+#  - test
+  - publish
+  - trigger_publish
+
+#
+# _/_/_/_/_/            _/
+#    _/      _/  _/_/        _/_/_/    _/_/_/    _/_/    _/  _/_/
+#   _/      _/_/      _/  _/    _/  _/    _/  _/_/_/_/  _/_/
+#  _/      _/        _/  _/    _/  _/    _/  _/        _/
+# _/      _/        _/    _/_/_/    _/_/_/    _/_/_/  _/
+#                            _/        _/
+#                       _/_/      _/_/
+#
+
+manual_trigger:
+  stage: trigger
+  script:
+    - echo "Triggered"
+  when: manual
+  tags: [cinode]
+  allow_failure: false
+
+#
+#     _/_/_/              _/  _/        _/
+#    _/    _/  _/    _/      _/    _/_/_/
+#   _/_/_/    _/    _/  _/  _/  _/    _/
+#  _/    _/  _/    _/  _/  _/  _/    _/
+# _/_/_/      _/_/_/  _/  _/    _/_/_/
+#
+
+build el7 pythonds 27:
+  extends: .build-template
+  tags: [docker]
+  variables:
+    PACKAGE_NAME: ""
+    FPM_FLAGS: ""
+    PYTHON_VERSION: python
+    DIST: el7
+    ARCH: noarch
+    DEPLOY: ""
+
+build el7 pythonds 34:
+  extends: .build-template
+  tags: [docker]
+  variables:
+    PACKAGE_NAME: ""
+    FPM_FLAGS: ""
+    PYTHON_VERSION: python3
+    DIST: el7
+    ARCH: noarch
+    DEPLOY: "True"
+
+build el7 pythonds 36:
+  extends: .build-template
+  tags: [docker]
+  variables:
+    PACKAGE_NAME: ""
+    FPM_FLAGS: ""
+    PYTHON_VERSION: python3.6
+    DIST: el7
+    ARCH: noarch
+    DEPLOY: ""
+
+build el6 pythonds 27:
+  extends: .build-template
+  tags: [docker]
+  variables:
+    PACKAGE_NAME: ""
+    FPM_FLAGS: ""
+    PYTHON_VERSION: python
+    DIST: el6
+    ARCH: noarch
+    DEPLOY: ""
+
+build el6 pythonds 34:
+  extends: .build-template
+  tags: [docker]
+  variables:
+    PACKAGE_NAME: ""
+    FPM_FLAGS: ""
+    PYTHON_VERSION: python3
+    DIST: el6
+    ARCH: noarch
+    DEPLOY: ""
+
+build el6 pythonds 36:
+  extends: .build-template
+  tags: [docker]
+  variables:
+    PACKAGE_NAME: ""
+    FPM_FLAGS: ""
+    PYTHON_VERSION: python3.6
+    DIST: el6
+    ARCH: noarch
+    DEPLOY: ""
+
+#
+# _/_/_/_/_/                      _/
+#    _/      _/_/      _/_/_/  _/_/_/_/
+#   _/    _/_/_/_/  _/_/        _/
+#  _/    _/            _/_/    _/
+# _/      _/_/_/  _/_/_/        _/_/
+#
+#echo-test:
+#  stage: test
+#  script: echo "Maybe One Day..."
+
+
+#
+#     _/_/_/              _/        _/  _/            _/
+#    _/    _/  _/    _/  _/_/_/    _/        _/_/_/  _/_/_/
+#   _/_/_/    _/    _/  _/    _/  _/  _/  _/_/      _/    _/
+#  _/        _/    _/  _/    _/  _/  _/      _/_/  _/    _/
+# _/          _/_/_/  _/_/_/    _/  _/  _/_/_/    _/    _/
+#
+
+publish_binary_rpm:
+  extends: .publish_in_repo
+  variables:
+    ARTEFACT: "RPM"
+
+
+#
+#     _/_/_/              _/        _/  _/            _/
+#    _/    _/  _/    _/  _/_/_/    _/        _/_/_/  _/_/_/
+#   _/_/_/    _/    _/  _/    _/  _/  _/  _/_/      _/    _/
+#  _/        _/    _/  _/    _/  _/  _/      _/_/  _/    _/
+# _/          _/_/_/  _/_/_/    _/  _/  _/_/_/    _/    _/
+#
+#
+#
+# _/_/_/_/_/            _/
+#    _/      _/  _/_/        _/_/_/    _/_/_/    _/_/    _/  _/_/
+#   _/      _/_/      _/  _/    _/  _/    _/  _/_/_/_/  _/_/
+#  _/      _/        _/  _/    _/  _/    _/  _/        _/
+# _/      _/        _/    _/_/_/    _/_/_/    _/_/_/  _/
+#                            _/        _/
+#                       _/_/      _/_/
+#
+# CENTOS 7 REPO
+
+publish testing el7 noarch:
+  extends: .trigger_publish_rpm
+  variables:
+    RELEASE: testing
+    DIST: el7
+    ARCH: noarch
+  only:
+    - develop
+
+publish public el7 noarch:
+  extends: .trigger_publish_rpm
+  variables:
+    RELEASE: public
+    DIST: el7
+    ARCH: noarch
+  only:
+    - master
+
+# CENTOS 6 REPO
+
+publish testing el6 noarch:
+  extends: .trigger_publish_rpm
+  variables:
+    RELEASE: testing
+    DIST: el6
+    ARCH: noarch
+  only:
+    - develop
+
+publish public el6 noarch:
+  extends: .trigger_publish_rpm
+  variables:
+    RELEASE: public
+    DIST: el6
+    ARCH: noarch
+  only:
+    - master

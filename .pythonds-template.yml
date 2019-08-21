@@ -1,6 +1,7 @@
 include:
   - local: '/.base-ci.yml'
 
+
 #
 # _/_/_/_/_/            _/
 #    _/      _/  _/_/        _/_/_/    _/_/_/    _/_/    _/  _/_/
@@ -18,6 +19,7 @@ include:
 #  _/    _/  _/    _/  _/  _/  _/    _/
 # _/_/_/      _/_/_/  _/  _/    _/_/_/
 #
+
 .build-template:
   stage: build
   image: docker.maxiv.lu.se/centos7-build:latest
@@ -27,48 +29,34 @@ include:
     - |
       echo "Make clean"
       rm -f ./*.*.rpm
-      rm -rf build/
 
     #- make build DIST=$DIST ARCH=$ARCH
     - |
       export PROFILE=maxlab-${RELEASE}-${DIST}-${ARCH}
 
       echo "Make build for $PROFILE"
-      maxpkg --dist=${DIST} sources --create-archive
-      maxpkg --dist=${DIST} mockbuild --root=$PROFILE
-
-      # Native RPM
-      echo "Moving NATIVE RPMS files"
-      SOURCE_DIR=results/$PROFILE
-      SOURCE_FILES="*.*86*.rpm"
-      TARGET_DIR=RPM/$RELEASE/$DIST/$ARCH
-      safe_mv $SOURCE_DIR $SOURCE_FILES $TARGET_DIR
-
-      # Architecture independant
-      echo "Moving NOARCH RPMS files"
-      SOURCE_FILES="*.noarch.rpm"
-      TARGET_DIR=RPM/$RELEASE/$DIST/$ARCH
-      safe_mv $SOURCE_DIR $SOURCE_FILES $TARGET_DIR
-
-      # SOURCE RPM
-      echo "Moving SRPMS files"
-      SOURCE_DIR=results/$PROFILE
-      SOURCE_FILES="*.src.rpm"
-      TARGET_DIR=SRPMS/$RELEASE/$DIST/SRPMS
-      safe_mv $SOURCE_DIR $SOURCE_FILES $TARGET_DIR
-
-      # LOG FILES
-      echo "Moving Logs files"
-      SOURCE_DIR=results/$PROFILE
-      SOURCE_FILES="*.log"
-      TARGET_DIR=LOGS/$RELEASE/$DIST/$ARCH
-      safe_mv $SOURCE_DIR $SOURCE_FILES $TARGET_DIR
+      mkdir -p results/$PROFILE
+      if [ -z "${PACKAGE_NAME}" ]
+      then
+        fpm -s python -t rpm --python-bin ${PYTHON_VERSION} --rpm-dist ${DIST} -p results/${PROFILE} ${FPM_FLAGS} --verbose .
+      else
+        fpm -s python -t rpm --python-bin ${PYTHON_VERSION} --rpm-dist ${DIST} -p results/${PROFILE} --name ${PACKAGE_NAME} ${FPM_FLAGS} --verbose .
+      fi
+      if [[ ${DEPLOY} = True ]]
+      then
+        # Architecture independant
+        echo "Moving NOARCH RPMS files"
+        SOURCE_DIR=results/$PROFILE
+        SOURCE_FILES="*.noarch.rpm"
+        TARGET_DIR=RPM/$RELEASE/$DIST/$ARCH
+        safe_mv $SOURCE_DIR $SOURCE_FILES $TARGET_DIR
+      else
+        echo "Environment Variable DEPLOY is not defined for ${DIST} ${ARCH} ${PYTHON_VERSION}"
+      fi
   except:
     variables:
       - $UNSUPPORTED
   artifacts:
     paths:
       - RPM
-      - SRPMS
-      - LOGS
     expire_in: 1 week
